@@ -1,23 +1,0 @@
-[33m⠋[0m  Processing[K[33m⠙[0m  Processing[K[33m⠹[0m  Processing[K[33m⠸[0m  Processing[K[33m⠼[0m  Processing[K[33m⠴[0m  Processing[K[33m⠦[0m  Processing[K[33m⠧[0m  Processing[K[33m⠇[0m  Processing[K[33m⠏[0m  Processing[K[33m⠋[0m  Processing[K[33m⠙[0m  Processing[K[33m⠹[0m  Processing[K[33m⠸[0m  Processing[K[33m⠼[0m  Processing[K[33m⠴[0m  Processing[K[33m⠦[0m  Processing[K[33m⠧[0m  Processing[KLoading Soybean Root Images ...
-[33m⠇[0m  Processing[K[33m⠏[0m  Processing[K[33m⠋[0m  Processing[K[33m⠙[0m  Processing[K[33m⠹[0m  Processing[K[33m⠸[0m  Processing[K[33m⠼[0m  Processing[K[33m⠴[0m  Processing[K[33m⠦[0m  Processing[K[33m⠧[0m  Processing[K[33m⠇[0m  Processing[K[33m⠏[0m  Processing[K[33m⠋[0m  Processing[KImageDataBunch;
-
-Train: LabelList (404 items)
-x: ImageList
-Image (3, 512, 512),Image (3, 512, 512),Image (3, 512, 512),Image (3, 512, 512),Image (3, 512, 512)
-y: CategoryList
-susceptible,susceptible,susceptible,susceptible,susceptible
-Path: datasets/SoyBean_Root_Images;
-
-Valid: LabelList (101 items)
-x: ImageList
-Image (3, 512, 512),Image (3, 512, 512),Image (3, 512, 512),Image (3, 512, 512),Image (3, 512, 512)
-y: CategoryList
-susceptible,susceptible,resistant,susceptible,resistant
-Path: datasets/SoyBean_Root_Images;
-
-Test: None
-The classes of the images are ['resistant', 'susceptible']
-Load the <function resnet152 at 0x7fb20f72cef0> model...............
-[33m⠙[0m  Processing[K[33m⠹[0m  Processing[K[33m⠸[0m  Processing[K[33m⠼[0m  Processing[K[33m⠴[0m  Processing[K[33m⠦[0m  Processing[K[33m⠧[0m  Processing[K[33m⠇[0m  Processing[K[33m⠏[0m  Processing[K[33m⠋[0m  Processing[K[33m⠙[0m  Processing[K[33m⠹[0m  Processing[K[33m⠸[0m  Processing[K[33m⠼[0m  Processing[K[33m⠴[0m  Processing[K[33m⠦[0m  Processing[K[33m⠧[0m  Processing[K[33m⠇[0m  Processing[K[33m⠏[0m  Processing[K[33m⠋[0m  Processing[K[33m⠙[0m  Processing[K[33m⠹[0m  Processing[K[33m⠸[0m  Processing[K[33m⠼[0m  Processing[K[33m⠴[0m  Processing[K[33m⠦[0m  Processing[K[33m⠧[0m  Processing[K[33m⠇[0m  Processing[K[33m⠏[0m  Processing[K[33m⠋[0m  Processing[K[33m⠙[0m  Processing[K[33m⠹[0m  Processing[K[33m⠸[0m  Processing[K[33m⠼[0m  Processing[K[33m⠴[0m  Processing[K[33m⠦[0m  Processing[K[33m⠧[0m  Processing[K[33m⠇[0m  Processing[K[33m⠏[0m  Processing[K[33m⠋[0m  Processing[K[33m⠙[0m  Processing[K[33m⠹[0m  Processing[K[33m⠸[0m  Processing[K[33m⠼[0m  Processing[K[33m⠴[0m  Processing[K[33m⠦[0m  Processing[K[33m⠧[0m  Processing[K[33m⠇[0m  Processing[K[33m⠏[0m  Processing[K[33m⠋[0m  Processing[K[33m⠙[0m  Processing[K[33m⠹[0m  Processing[K[33m⠸[0m  Processing[K[33m⠼[0m  Processing[K[33m⠴[0m  Processing[K[33m⠦[0m  Processing[KFinished loading the model #########
-epoch     train_loss  valid_loss  error_rate  accuracy  precision  recall    time    
-[33m⠧[0m  Processing[K[33m⠇[0m  Processing[K[33m⠏[0m  Processing[K[33m⠋[0m  Processing[K[33m⠙[0m  Processing[K[33m⠹[0m  Processing[K[33m⠸[0m  Processing[K[33m⠼[0m  Processing[K[33m⠴[0m  Processing[K[33m⠦[0m  Processing[K[33m⠧[0m  Processing[K[33m⠇[0m  Processing[K[33m⠏[0m  Processing[K[33m⠋[0m  Processing[K[33m⠙[0m  Processing[K[33m⠹[0m  Processing[K[33m⠸[0m  Processing[K[33m⠼[0m  Processing[K[33m⠴[0m  Processing[K[33m⠦[0m  Processing[K[33m⠧[0m  Processing[K[33m⠇[0m  Processing[K[33m⠏[0m  Processing[K[K
