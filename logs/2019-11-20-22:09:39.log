@@ -1,0 +1,19 @@
+Loading Soybean Root Images ...
+ImageDataBunch;
+
+Train: LabelList (404 items)
+x: ImageList
+Image (3, 512, 512),Image (3, 512, 512),Image (3, 512, 512),Image (3, 512, 512),Image (3, 512, 512)
+y: CategoryList
+susceptible,susceptible,susceptible,susceptible,susceptible
+Path: datasets/SoyBean_Root_Images;
+
+Valid: LabelList (101 items)
+x: ImageList
+Image (3, 512, 512),Image (3, 512, 512),Image (3, 512, 512),Image (3, 512, 512),Image (3, 512, 512)
+y: CategoryList
+resistant,resistant,susceptible,susceptible,susceptible
+Path: datasets/SoyBean_Root_Images;
+
+Test: None
+The classes of the images are ['resistant', 'susceptible']
