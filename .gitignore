@@ -3,3 +3,6 @@ datasets/
 
 #Ignore the logs
 logs/
+
+#Ignore the log images 
+images/

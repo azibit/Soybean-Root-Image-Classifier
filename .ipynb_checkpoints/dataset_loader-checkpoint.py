@@ -5,47 +5,134 @@ import time
 from random import randint
 from yaspin import yaspin
 from fastai.vision import *
+from fastai import *
+from fastai.core import *
+from fastai.vision import image as im
 import datetime
+from PIL import Image   
+from sys import argv
+import json 
+
 
 SOYBEAN_ROOT_PATH = 'datasets/SoyBean_Root_Images'
+LOG_IMAGES_FOLDER = "images_folder/"
+RESNET_152 = 'models.resnet152'
+LOCALLY_TRAINED_MODEL = '2019-11-20 20:27:16.815719'
 
-def load_soybean_root_images():
+def get_models(model_name):
+    if(model_name == RESNET_152):
+        return models.resnet152
+
+def get_dataset(dataset_file):
+    print("Getting the dataset we need from the path: {0}".format(dataset_file))
     bs = 8
     transforms = get_transforms(do_flip=True, flip_vert=True, 
                             max_lighting=0.1, max_rotate=359, max_zoom=1.05, max_warp=0.1)
-    data = ImageDataBunch.from_folder(SOYBEAN_ROOT_PATH,
+    data = ImageDataBunch.from_folder(dataset_file,
                                   valid_pct = 0.2,
                                  size = 512,
                                  bs = bs,
                                   resize_method=ResizeMethod.SQUISH,
                                   ds_tfms=transforms
                                  ).normalize(imagenet_stats)
-    
+    print("Completely loaded all dataset images")
+    return data
+
+def load_soybean_root_images():
+    data = get_dataset(SOYBEAN_ROOT_PATH)
     print('Loading Soybean Root Images ...')
     print(data)
     print("The classes of the images are {0}".format(data.classes))
     
-#     #Load the ResNet152 Model
-#     model_to_train = load_deep_learning_model(data, models.resnet152)
+    #Load the ResNet152 Model
+    model_to_train = load_deep_learning_model(data, models.resnet152)
     
-#     #Train the model
-#     cycles_in_first_training = 30
-#     train_model(model_to_train, cycles_in_first_training)
+    #Train the model
+    cycles_in_first_training = 30
+    train_model(model_to_train, cycles_in_first_training)
+
+    #Return locally trained model
+    #load_locally_trained_model(RESNET_152, LOCALLY_TRAINED_MODEL, SOYBEAN_ROOT_PATH)
     
-def load_deep_learning_model(data, model):
+def load_deep_learning_model(data, model_name):
     """Load the data and the model to use for training"""
     
-    print("Load the {0} model...............".format(model))
-    model_to_train = cnn_learner(data, model, metrics=[error_rate, accuracy, Precision(), Recall()])
+    print("Load the data and the model to use for training ...")
+    model_to_train = cnn_learner(data, get_models(model_name), metrics=[error_rate, accuracy, Precision(), Recall()])
+    
     print("Finished loading the model #########")
     return model_to_train
     
-def train_model(model_to_train, cycle):
-    currentDT = datetime.datetime.now()
+def train_model(model_name, data, cycle):
+    """Train a model from base available model"""
+    model_to_train = load_deep_learning_model(model_name, data)
     model_to_train.fit_one_cycle(cycle)
-    model_name = str(currentDT)
+    model_name = current_date_time_as_str()
     model_to_train.save(model_name)
     
+def load_locally_trained_model(model_name, locally_trained_model_name, dataset_path):
+    """Load a model that has been trained already so it can be used for further experiments"""
+    
+    print("Load a model that has been trained already so it can be used for further experiments")
+    #Load the data to use
+    data = get_dataset(dataset_path)
+    
+    #Load the model to continue training on based on data and model
+    model = load_deep_learning_model(data, model_name)
+    model.load(locally_trained_model_name)
+    
+    #plot_learning_rate(model)
+    
+    return model
 
-load_soybean_root_images()
+def current_date_time_as_str():
+    return str(datetime.datetime.now())
 
+def get_images_path():
+    return LOG_IMAGES_FOLDER + current_date_time_as_str() + ".png"
+
+def plot_learning_rate(model):
+    """Plot the learning rate of the model"""
+    print("Plot the learning rate of the model")
+    model.unfreeze()
+    model.lr_find()
+    image = model.recorder.plot(return_fig=True)
+    
+    #Check if the images folder exists, otherwise, create a new folder
+    if not os.path.exists(LOG_IMAGES_FOLDER):
+        os.makedirs(LOG_IMAGES_FOLDER)
+    
+    #Save the image in the images folder
+    print('Type of image is {0}'.format(type(image)))
+    image.savefig(get_images_path())
+    print(image)
+    
+def retrain_trained_model(model_name, locally_trained_model_name, dataset_path, cycle, slices_min, slices_max):
+    """Retrain the trained model with new values"""
+    
+    print("Retrain the trained model with new values")
+    # Load the locally trained model
+    model = load_locally_trained_model(model_name, locally_trained_model_name, dataset_path)
+    
+    print("Fitting with new values")
+    #Fit with the new provided values
+    model.fit_one_cycle(cycle, max_lr=slice(slices_min, slices_max))
+    model.save(current_date_time_as_str())
+    print("Saved the model")
+    
+def training_after_initial_unfreeze(value):
+    new_value = json.loads(value)
+    
+    model_name = new_value['model_name']
+    locally_trained_model_name = new_value['locally_trained_model_name']
+    dataset_path = new_value['dataset_path']
+    
+    cycle = new_value['cycle']
+    slices_min = new_value['slices_min']
+    slices_max = new_value['slices_max']
+    retrain_trained_model(model_name, locally_trained_model_name, dataset_path, cycle, slices_min, slices_max)
+
+# load_soybean_root_images()
+# load_locally_trained_model(RESNET_152, LOCALLY_TRAINED_MODEL, SOYBEAN_ROOT_PATH)
+
+training_after_initial_unfreeze(argv[1])
