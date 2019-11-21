@@ -5,4 +5,4 @@ datasets/
 logs/
 
 #Ignore the log images 
-images/
+images_folder/
