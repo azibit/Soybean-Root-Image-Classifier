@@ -17,7 +17,7 @@ import json
 SOYBEAN_ROOT_PATH = 'datasets/SoyBean_Root_Images'
 LOG_IMAGES_FOLDER = "images_folder/"
 RESNET_152 = 'models.resnet152'
-LOCALLY_TRAINED_MODEL = '2019-11-20 20:27:16.815719'
+LOCALLY_TRAINED_MODEL = '2019-11-21 04:58:57.324736'
 
 def get_models(model_name):
     if(model_name == RESNET_152):
@@ -91,6 +91,12 @@ def current_date_time_as_str():
 def get_images_path():
     return LOG_IMAGES_FOLDER + current_date_time_as_str() + ".png"
 
+def confusion_matrix_images_path():
+    return LOG_IMAGES_FOLDER + "conf_matrix_" + current_date_time_as_str() + ".png"
+
+def losses_images_path():
+    return LOG_IMAGES_FOLDER + "losses_" + current_date_time_as_str() + ".png"
+
 def plot_learning_rate(model):
     """Plot the learning rate of the model"""
     print("Plot the learning rate of the model")
@@ -132,7 +138,31 @@ def training_after_initial_unfreeze(value):
     slices_max = new_value['slices_max']
     retrain_trained_model(model_name, locally_trained_model_name, dataset_path, cycle, slices_min, slices_max)
 
-# load_soybean_root_images()
-# load_locally_trained_model(RESNET_152, LOCALLY_TRAINED_MODEL, SOYBEAN_ROOT_PATH)
+def show_confusion_matrix():
+    """Show the confusion matrix for the model"""
+    model = load_locally_trained_model(RESNET_152, LOCALLY_TRAINED_MODEL, SOYBEAN_ROOT_PATH)
+    preds,y,losses = model.get_preds(with_loss=True)
+    interp = ClassificationInterpretation(model, preds, y, losses)
+    
+    print("Loading the images")
+    image = interp.plot_confusion_matrix(return_fig=True)
+    image.savefig(confusion_matrix_images_path())
+    print("Confusion Matrix image saved")
+    
+    losses,idxs = interp.top_losses(10)
+    data = get_dataset(SOYBEAN_ROOT_PATH)
+    print("TOP 10 Images with the highest loss")
+    for p in data.valid_ds.x.items[idxs]:
+        print(p)
+        
+def freeze_to(model, layers_to_freeze):
+    """Freeze specified number of layers in the model"""
+    
+    print("Freezing layers now .....")
+    model.freeze_to(layers_to_freeze)
+    print("Freezing complete")
+    
+    return model
 
-training_after_initial_unfreeze(argv[1])
+# training_after_initial_unfreeze(argv[1])
+show_confusion_matrix()
