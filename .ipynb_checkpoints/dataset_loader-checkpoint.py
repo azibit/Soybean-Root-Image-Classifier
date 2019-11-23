@@ -53,6 +53,9 @@ def k_fold_cross_validation(k, dataset_file, model_name, cycle):
     skf = StratifiedKFold(n_splits = k, shuffle = True, random_state = 1)
     acc_val = []
     
+    # Update the model to the new model after every iteratio
+    saved_model_new__name = LOCALLY_TRAINED_MODEL
+    
     print("Starting cross-validation from here !!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     for train_index, val_index in skf.split(df.index, df['y']):
         print("Cross Validation Starting again &&&")
@@ -70,7 +73,8 @@ def k_fold_cross_validation(k, dataset_file, model_name, cycle):
         
         print("Load Locally trained Model")
         # Load locally trained model
-        learn.load(LOCALLY_TRAINED_MODEL)
+        # Update the model to the new model after every iteratio
+        learn.load(saved_model_new__name)
         
         print("Freeze the first 100 Layers")
         #Freeze the first 100 layers
@@ -124,7 +128,7 @@ def load_deep_learning_model(data, model_name):
     
     print("Load the data and the model to use for training ...")
 #     model_to_train = cnn_learner(data, get_models(model_name), metrics=[error_rate, accuracy, Precision(), Recall()])
-    model_to_train = cnn_learner(data, get_models(model_name), metrics=error_rate)
+    model_to_train = cnn_learner(data, get_models(model_name), metrics=accuracy)
 
     print("Finished loading the model #########")
     return model_to_train
@@ -231,4 +235,4 @@ def freeze_to(model, layers_to_freeze):
 
 # training_after_initial_unfreeze(argv[1])
 # show_confusion_matrix()
-k_fold_cross_validation(5, SOYBEAN_ROOT_PATH, RESNET_152, 2)
+k_fold_cross_validation(5, SOYBEAN_ROOT_PATH, RESNET_152, 50)
