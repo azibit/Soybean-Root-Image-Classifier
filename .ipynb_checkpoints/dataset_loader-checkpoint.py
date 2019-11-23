@@ -12,12 +12,16 @@ import datetime
 from PIL import Image   
 from sys import argv
 import json 
+from sklearn.model_selection import StratefiedKFold
 
 
 SOYBEAN_ROOT_PATH = 'datasets/SoyBean_Root_Images'
 LOG_IMAGES_FOLDER = "images_folder/"
 RESNET_152 = 'models.resnet152'
 LOCALLY_TRAINED_MODEL = '2019-11-21 04:58:57.324736'
+TRANSFORMS = get_transforms(do_flip=True, flip_vert=True, 
+                            max_lighting=0.1, max_rotate=359, max_zoom=1.05, max_warp=0.1)
+IMAGE_SIZE = 512
 
 def get_models(model_name):
     if(model_name == RESNET_152):
@@ -26,17 +30,67 @@ def get_models(model_name):
 def get_dataset(dataset_file):
     print("Getting the dataset we need from the path: {0}".format(dataset_file))
     bs = 8
-    transforms = get_transforms(do_flip=True, flip_vert=True, 
-                            max_lighting=0.1, max_rotate=359, max_zoom=1.05, max_warp=0.1)
     data = ImageDataBunch.from_folder(dataset_file,
                                   valid_pct = 0.2,
-                                 size = 512,
+                                 size = IMAGE_SIZE,
                                  bs = bs,
                                   resize_method=ResizeMethod.SQUISH,
-                                  ds_tfms=transforms
+                                  ds_tfms=TRANSFORMS
                                  ).normalize(imagenet_stats)
     print("Completely loaded all dataset images")
     return data
+
+def k_fold_cross_validation(k, dataset_file, model_name, cycle):
+    """Perform a k-fold cross-validation"""
+    
+    # Get the dataset to use.
+    data = get_dataset(dataset_file)
+    
+    #Get the dataframe from the data
+    df = data.to_df()
+    
+    skf = StratefiedKFold(n_split = k, shuffle = True, random_state = 1)
+    acc_val = []
+    
+    for train_index, val_index in skf.split(df.index, df['y']):
+        data_fold = (ImageList.from_df(df, path)
+                     .split_by_idxs(train_index, val_index)
+                     .label_from_df()
+                     .transform(TRANSFORMS, IMAGE_SIZE)
+                     .databunch(num_workers = 0)).normalize(imagenet_stats)
+        
+        # Load the model based on the new data
+        learn = load_deep_learning_model(data_fold, get_models(model_name))
+        
+        # Load locally trained model
+        learn.load(LOCALLY_TRAINED_MODEL)
+        
+        #Freeze the first 100 layers
+        learn  = freeze_to(learn, 100)
+        
+        learn.fit_one_cycle(cycle)
+        loss, acc = learn.validate()
+        
+        accuracy_result = acc.numpy()
+        print("Accuracy is {0}".format(accuracy_result))
+        acc_val.append(accuracy_result)
+        
+        # Show the confusion matrix
+        show_confusion_matrix(learn)
+        
+        #Save the model
+        model_name = current_date_time_as_str()
+        learn.save(model_name)
+        
+    mean_accuracy = np.mean(acc_val)
+    print("Mean accuracy: {0}".format(mean_accuracy))
+    
+    std_deviation = np.std(acc_val)
+    print("Standard deviation of accuracy: {0}".format(std_deviation))
+    
+    print("Completed cross validation at this point ###")
+    
+    
 
 def load_soybean_root_images():
     data = get_dataset(SOYBEAN_ROOT_PATH)
@@ -138,9 +192,8 @@ def training_after_initial_unfreeze(value):
     slices_max = new_value['slices_max']
     retrain_trained_model(model_name, locally_trained_model_name, dataset_path, cycle, slices_min, slices_max)
 
-def show_confusion_matrix():
+def show_confusion_matrix(model):
     """Show the confusion matrix for the model"""
-    model = load_locally_trained_model(RESNET_152, LOCALLY_TRAINED_MODEL, SOYBEAN_ROOT_PATH)
     preds,y,losses = model.get_preds(with_loss=True)
     interp = ClassificationInterpretation(model, preds, y, losses)
     
@@ -165,4 +218,5 @@ def freeze_to(model, layers_to_freeze):
     return model
 
 # training_after_initial_unfreeze(argv[1])
-show_confusion_matrix()
+# show_confusion_matrix()
+k_fold_cross_validation(5, SOYBEAN_ROOT_PATH, RESNET_152, 50)
