@@ -8,9 +8,10 @@ from pathlib import Path
 LOCAL_DIR_LOCATION = 'datasets/'
 SOYBEAN_ROOT_IMAGES = 'https://azibit-models-bucket-1.s3.amazonaws.com/SoyBean_Root_Images.zip'
 
-def download_url(url=SOYBEAN_ROOT_IMAGES):
+def download_url(url, folder_to_download_to):
     """Download files from a given URL to the specified local file location"""
     
+    local_dir_location = folder_to_download_to
     local_dir_location = 'datasets/'
     local_dir_exists = os.path.isdir(local_dir_location)
     
@@ -36,13 +37,13 @@ def download_url(url=SOYBEAN_ROOT_IMAGES):
         wget.download(url, local_dir_location)
         print("All done now ######################################")
     
-    unzip_file(local_dir_location + os.path.basename(url)) 
+    unzip_file(local_dir_location + os.path.basename(url), folder_to_download_to) 
         
         
-def unzip_file(zipped_file_path):
+def unzip_file(zipped_file_path, folder_to_download_to):
     unzipped_folder = zipped_file_path.split("/")[-1].split(".")[0] 
     
-    unzipped_folder_path = LOCAL_DIR_LOCATION + unzipped_folder + '/'
+    unzipped_folder_path = folder_to_download_to + unzipped_folder + '/'
     unzipped_folder_exists = os.path.isdir(unzipped_folder_path)
     
     if(unzipped_folder_exists):
@@ -51,11 +52,12 @@ def unzip_file(zipped_file_path):
         print('Unzipped file does not exist. #################')
         with zipfile.ZipFile(zipped_file_path, 'r') as zip_ref:
             print('Extracting now #####################')
-            zip_ref.extractall(LOCAL_DIR_LOCATION)  
+            zip_ref.extractall(folder_to_download_to)  
             print('Completely extracted #####################')
         
  
         
 url = argv[1]
-download_url(url)
+folder_to_download_to = argv[2]
+download_url(url, folder_to_download_to)
 
