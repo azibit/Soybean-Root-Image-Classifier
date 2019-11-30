@@ -18,7 +18,8 @@ from sklearn.model_selection import StratifiedKFold
 SOYBEAN_ROOT_PATH = 'datasets/SoyBean_Root_Images'
 LOG_IMAGES_FOLDER = "images_folder/"
 RESNET_152 = 'models.resnet152'
-LOCALLY_TRAINED_MODEL = '2019-11-21 04:58:57.324736'
+VGG19_BN = 'models.vgg19_bn'
+LOCALLY_TRAINED_MODEL = 'soybean_root_image_classifier'
 TRANSFORMS = get_transforms(do_flip=True, flip_vert=True, 
                             max_lighting=0.1, max_rotate=359, max_zoom=1.05, max_warp=0.1)
 IMAGE_SIZE = 512
@@ -26,6 +27,8 @@ IMAGE_SIZE = 512
 def get_models(model_name):
     if(model_name == RESNET_152):
         return models.resnet152
+    elif(model_name == VGG19_BN):
+        return models.vgg19_bn
 
 def get_dataset(dataset_file):
     print("Getting the dataset we need from the path: {0}".format(dataset_file))
@@ -52,6 +55,8 @@ def k_fold_cross_validation(k, dataset_file, model_name, cycle):
     
     skf = StratifiedKFold(n_splits = k, shuffle = True, random_state = 1)
     acc_val = []
+    precision_val = []
+    recall_val = []
     
     # Update the model to the new model after every iteratio
     saved_model_new__name = LOCALLY_TRAINED_MODEL
@@ -65,7 +70,7 @@ def k_fold_cross_validation(k, dataset_file, model_name, cycle):
                      .transform(TRANSFORMS, size=IMAGE_SIZE)
                      .databunch(num_workers = 2)).normalize(imagenet_stats)
         
-        data_fold.batch_size = 8
+        data_fold.batch_size = 16
         
         # Load the model based on the new data
         print("Loading the Deep Learning Model $$$$$$")
@@ -82,11 +87,18 @@ def k_fold_cross_validation(k, dataset_file, model_name, cycle):
         
         print("TRAIN! TRAIN!! TRAIN!!!")
         learn.fit_one_cycle(cycle)
-        loss, acc = learn.validate()
-        
-        accuracy_result = acc.numpy()
-        print("Accuracy is {0}".format(accuracy_result))
-        acc_val.append(accuracy_result)
+        print("Any issues here @@@@@@@@@@@@@@@@@@@@@@")
+        x = learn.validate(metrics=[error_rate, accuracy, Precision(), Recall()])
+        print("The result is: {0}".format(len(x)))
+        last, error_rate, acc, precision, recall = x[0], x[1], x[2], x[3], x[4]
+        print("Accuracy: {0}".format(acc))
+        print("Loss: {0}".format(error_rate))
+        print("Precision: {0}".format(precision))
+        print("Recall: {0}".format(recall))
+        print("Last: {0}".format(last))
+        acc_val.append(acc)
+        precision_val.append(precision)
+        recall_val.append(recall)
         
         print("SHOW CONFUSION MATRIX")
         # Show the confusion matrix
@@ -98,10 +110,18 @@ def k_fold_cross_validation(k, dataset_file, model_name, cycle):
         learn.save(saved_model_new__name)
         
     mean_accuracy = np.mean(acc_val)
+    mean_precision = np.mean(precision_val)
+    mean_recall = np.mean(recall_val)
     print("Mean accuracy: {0}".format(mean_accuracy))
+    print("Mean precision: {0}".format(mean_precision))
+    print("Mean recall: {0}".format(mean_recall))
     
-    std_deviation = np.std(acc_val)
-    print("Standard deviation of accuracy: {0}".format(std_deviation))
+    std_deviation_acc = np.std(acc_val)
+    std_deviation_precision = np.std(precision_val)
+    std_deviation_recall = np.std(recall_val)
+    print("Standard deviation of accuracy: {0}".format(std_deviation_acc))
+    print("Standard deviation of precision: {0}".format(std_deviation_precision))
+    print("Standard deviation of recall: {0}".format(std_deviation_precision))
     
     print("Completed cross validation at this point ###")
     
@@ -127,18 +147,19 @@ def load_deep_learning_model(data, model_name):
     """Load the data and the model to use for training"""
     
     print("Load the data and the model to use for training ...")
-#     model_to_train = cnn_learner(data, get_models(model_name), metrics=[error_rate, accuracy, Precision(), Recall()])
-    model_to_train = cnn_learner(data, get_models(model_name), metrics=accuracy)
+    model_to_train = cnn_learner(data, get_models(model_name), metrics=[error_rate, accuracy, Precision(), Recall()])
 
     print("Finished loading the model #########")
     return model_to_train
     
 def train_model(model_name, data, cycle):
     """Train a model from base available model"""
-    model_to_train = load_deep_learning_model(model_name, data)
+    model_to_train = load_deep_learning_model(data, model_name)
     model_to_train.fit_one_cycle(cycle)
     model_name = current_date_time_as_str()
     model_to_train.save(model_name)
+    
+    return model_to_train
     
 def load_locally_trained_model(model_name, locally_trained_model_name, dataset_path):
     """Load a model that has been trained already so it can be used for further experiments"""
@@ -233,6 +254,15 @@ def freeze_to(model, layers_to_freeze):
     
     return model
 
+def initial_training_with_new_model(model_to_train, dataset_path, cycles_to_train):
+    # Get the dataset we need
+    data = get_dataset(dataset_path)
+    
+    model = train_model(model_to_train, data, cycles_to_train)
+    plot_learning_rate(model)
+
 # training_after_initial_unfreeze(argv[1])
 # show_confusion_matrix()
-k_fold_cross_validation(5, SOYBEAN_ROOT_PATH, RESNET_152, 50)
+# k_fold_cross_validation(5, SOYBEAN_ROOT_PATH, RESNET_152, 10)
+
+initial_training_with_new_model(VGG19_BN, SOYBEAN_ROOT_PATH, 50)
