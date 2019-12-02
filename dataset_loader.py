@@ -18,8 +18,9 @@ from sklearn.model_selection import StratifiedKFold
 SOYBEAN_ROOT_PATH = 'datasets/SoyBean_Root_Images'
 LOG_IMAGES_FOLDER = "images_folder/"
 RESNET_152 = 'models.resnet152'
+RESNET_101 = 'models.resnet101'
 VGG19_BN = 'models.vgg19_bn'
-LOCALLY_TRAINED_MODEL = 'soybean_root_image_classifier'
+LOCALLY_TRAINED_MODEL = '2019-11-30 20:48:02.598479'
 TRANSFORMS = get_transforms(do_flip=True, flip_vert=True, 
                             max_lighting=0.1, max_rotate=359, max_zoom=1.05, max_warp=0.1)
 IMAGE_SIZE = 512
@@ -29,6 +30,8 @@ def get_models(model_name):
         return models.resnet152
     elif(model_name == VGG19_BN):
         return models.vgg19_bn
+    elif(model_name == RESNET_101):
+        return models.resnet101
 
 def get_dataset(dataset_file):
     print("Getting the dataset we need from the path: {0}".format(dataset_file))
@@ -81,18 +84,18 @@ def k_fold_cross_validation(k, dataset_file, model_name, cycle):
         # Update the model to the new model after every iteratio
         learn.load(saved_model_new__name)
         
-        print("Freeze the first 100 Layers")
-        #Freeze the first 100 layers
-        learn  = freeze_to(learn, 100)
+        print("Freeze the first 10 Layers")
+        #Freeze the first 10 layers
+        learn  = freeze_to(learn, 10)
         
         print("TRAIN! TRAIN!! TRAIN!!!")
         learn.fit_one_cycle(cycle)
         print("Any issues here @@@@@@@@@@@@@@@@@@@@@@")
         x = learn.validate(metrics=[error_rate, accuracy, Precision(), Recall()])
         print("The result is: {0}".format(len(x)))
-        last, error_rate, acc, precision, recall = x[0], x[1], x[2], x[3], x[4]
+        last, error, acc, precision, recall = x[0], x[1], x[2], x[3], x[4]
         print("Accuracy: {0}".format(acc))
-        print("Loss: {0}".format(error_rate))
+        print("Loss: {0}".format(error))
         print("Precision: {0}".format(precision))
         print("Recall: {0}".format(recall))
         print("Last: {0}".format(last))
@@ -263,6 +266,7 @@ def initial_training_with_new_model(model_to_train, dataset_path, cycles_to_trai
 
 # training_after_initial_unfreeze(argv[1])
 # show_confusion_matrix()
-# k_fold_cross_validation(5, SOYBEAN_ROOT_PATH, RESNET_152, 10)
+# k_fold_cross_validation(5, SOYBEAN_ROOT_PATH, VGG19_BN, 50)
 
-initial_training_with_new_model(VGG19_BN, SOYBEAN_ROOT_PATH, 50)
+initial_training_with_new_model(RESNET_101, SOYBEAN_ROOT_PATH, 150)
+# retrain_trained_model(VGG19_BN, LOCALLY_TRAINED_MODEL, SOYBEAN_ROOT_PATH, 100, 1e-6, 1e-3)
