@@ -20,7 +20,7 @@ LOG_IMAGES_FOLDER = "images_folder/"
 RESNET_152 = 'models.resnet152'
 RESNET_101 = 'models.resnet101'
 VGG19_BN = 'models.vgg19_bn'
-LOCALLY_TRAINED_MODEL = '2019-11-30 20:48:02.598479'
+LOCALLY_TRAINED_MODEL = '2019-12-02 17:59:34.220651'
 TRANSFORMS = get_transforms(do_flip=True, flip_vert=True, 
                             max_lighting=0.1, max_rotate=359, max_zoom=1.05, max_warp=0.1)
 IMAGE_SIZE = 512
@@ -73,23 +73,31 @@ def k_fold_cross_validation(k, dataset_file, model_name, cycle):
                      .transform(TRANSFORMS, size=IMAGE_SIZE)
                      .databunch(num_workers = 2)).normalize(imagenet_stats)
         
-        data_fold.batch_size = 16
-        
-        # Load the model based on the new data
-        print("Loading the Deep Learning Model $$$$$$")
+        data_fold.batch_size = 8        
         learn = load_deep_learning_model(data_fold, model_name)
-        
-        print("Load Locally trained Model")
-        # Load locally trained model
-        # Update the model to the new model after every iteratio
-        learn.load(saved_model_new__name)
-        
-        print("Freeze the first 10 Layers")
-        #Freeze the first 10 layers
-        learn  = freeze_to(learn, 10)
-        
-        print("TRAIN! TRAIN!! TRAIN!!!")
+    
+        print("Training Model from now")
         learn.fit_one_cycle(cycle)
+#         # Load the model based on the new data
+#         print("Loading the Deep Learning Model $$$$$$")
+#         learn = load_deep_learning_model(data_fold, model_name)
+        
+#         print("Load Locally trained Model")
+#         # Load locally trained model
+#         # Update the model to the new model after every iteratio
+# #         learn.load(saved_model_new__name)
+        
+#         print("Freeze the first 100 Layers")
+#         #Freeze the first 60 layers
+#         learn  = freeze_to(learn, 100)
+        
+#         print("TRAIN! TRAIN!! TRAIN!!!")
+#         slices_min = 1e-6
+#         slices_max = 1e-3
+# #         learn.fit_one_cycle(cycle, max_lr=slice(slices_min, slices_max))
+#         learn.fit_one_cycle(cycle)
+
+        
         print("Any issues here @@@@@@@@@@@@@@@@@@@@@@")
         x = learn.validate(metrics=[error_rate, accuracy, Precision(), Recall()])
         print("The result is: {0}".format(len(x)))
@@ -109,8 +117,8 @@ def k_fold_cross_validation(k, dataset_file, model_name, cycle):
         
         print("Save Model")
         #Save the model
-        saved_model_new__name = current_date_time_as_str()
-        learn.save(saved_model_new__name)
+#         saved_model_new__name = current_date_time_as_str()
+#         learn.save(saved_model_new__name)
         
     mean_accuracy = np.mean(acc_val)
     mean_precision = np.mean(precision_val)
@@ -137,7 +145,7 @@ def load_soybean_root_images():
     print("The classes of the images are {0}".format(data.classes))
     
     #Load the ResNet152 Model
-    model_to_train = load_deep_learning_model(data, models.resnet152)
+    model_to_train = load_deep_learning_model(get_dataset(data), models.resnet152)
     
     #Train the model
     cycles_in_first_training = 30
@@ -157,10 +165,14 @@ def load_deep_learning_model(data, model_name):
     
 def train_model(model_name, data, cycle):
     """Train a model from base available model"""
-    model_to_train = load_deep_learning_model(data, model_name)
+    model_to_train = load_deep_learning_model(get_dataset(data), model_name)
+    
+    print("Training Model from now")
     model_to_train.fit_one_cycle(cycle)
     model_name = current_date_time_as_str()
     model_to_train.save(model_name)
+    
+    plot_learning_rate(model_to_train)
     
     return model_to_train
     
@@ -258,15 +270,15 @@ def freeze_to(model, layers_to_freeze):
     return model
 
 def initial_training_with_new_model(model_to_train, dataset_path, cycles_to_train):
-    # Get the dataset we need
-    data = get_dataset(dataset_path)
     
-    model = train_model(model_to_train, data, cycles_to_train)
+    model = train_model(model_to_train, dataset_path, cycles_to_train)
     plot_learning_rate(model)
 
 # training_after_initial_unfreeze(argv[1])
 # show_confusion_matrix()
-# k_fold_cross_validation(5, SOYBEAN_ROOT_PATH, VGG19_BN, 50)
+k_fold_cross_validation(5, SOYBEAN_ROOT_PATH, RESNET_152, 100)
 
-initial_training_with_new_model(RESNET_101, SOYBEAN_ROOT_PATH, 150)
-# retrain_trained_model(VGG19_BN, LOCALLY_TRAINED_MODEL, SOYBEAN_ROOT_PATH, 100, 1e-6, 1e-3)
+# initial_training_with_new_model(RESNET_152, SOYBEAN_ROOT_PATH, 100)
+# retrain_trained_model(RESNET_101, LOCALLY_TRAINED_MODEL, SOYBEAN_ROOT_PATH, 100, 1e-6, 1e-5)
+
+# train_model(RESNET_101, SOYBEAN_ROOT_PATH, 200)
