@@ -6,7 +6,8 @@ import zipfile
 from pathlib import Path
 
 LOCAL_DIR_LOCATION = 'datasets/'
-SOYBEAN_ROOT_IMAGES = 'https://azibit-models-bucket-1.s3.amazonaws.com/SoyBean_Root_Images.zip'
+#SOYBEAN_ROOT_IMAGES = 'https://azibit-models-bucket-1.s3.amazonaws.com/SoyBean_Root_Images.zip'
+SOYBEAN_ROOT_IMAGES = 'https://azibit-models-bucket-1.s3.amazonaws.com/ORIGINAL_SY_BEAN_IMAGES.zip'
 
 
 def download_url(url, folder_to_download_to):
